@@ -4,7 +4,8 @@
 
 class VoiceService {
   constructor() {
-    this.synth = window.speechSynthesis;
+    // Check if window and speechSynthesis are available
+    this.synth = typeof window !== 'undefined' ? window.speechSynthesis : null;
     this.isSupported = !!this.synth;
     this.currentUtterance = null;
     this.isEnabled = false;
@@ -12,13 +13,19 @@ class VoiceService {
     
     // Load voices when they become available
     if (this.isSupported) {
-      this.loadVoices();
-      // Some browsers load voices asynchronously
-      this.synth.onvoiceschanged = () => this.loadVoices();
+      try {
+        this.loadVoices();
+        // Some browsers load voices asynchronously
+        this.synth.onvoiceschanged = () => this.loadVoices();
+      } catch (err) {
+        console.error('Voice service init error:', err);
+        this.isSupported = false;
+      }
     }
   }
 
   loadVoices() {
+    if (!this.synth) return;
     this.voices = this.synth.getVoices();
     console.log('Available voices:', this.voices.length);
   }
@@ -44,7 +51,7 @@ class VoiceService {
    * Announce a number
    */
   announceNumber(number, options = {}) {
-    if (!this.isEnabled || !this.isSupported) {
+    if (!this.isEnabled || !this.isSupported || !this.synth) {
       console.warn('Voice not enabled or not supported');
       return;
     }
@@ -63,21 +70,21 @@ class VoiceService {
     // Stop any ongoing speech
     this.stop();
 
-    // Create new utterance
-    this.currentUtterance = new SpeechSynthesisUtterance(text);
-    this.currentUtterance.lang = lang;
-    this.currentUtterance.rate = rate;
-    this.currentUtterance.pitch = pitch;
-    this.currentUtterance.volume = volume;
-
-    // Use a voice if available
-    if (this.voices.length > 0) {
-      const englishVoice = this.voices.find(v => v.lang.startsWith('en')) || this.voices[0];
-      this.currentUtterance.voice = englishVoice;
-    }
-
-    // Speak
     try {
+      // Create new utterance
+      this.currentUtterance = new SpeechSynthesisUtterance(text);
+      this.currentUtterance.lang = lang;
+      this.currentUtterance.rate = rate;
+      this.currentUtterance.pitch = pitch;
+      this.currentUtterance.volume = volume;
+
+      // Use a voice if available
+      if (this.voices.length > 0) {
+        const englishVoice = this.voices.find(v => v.lang.startsWith('en')) || this.voices[0];
+        this.currentUtterance.voice = englishVoice;
+      }
+
+      // Speak
       this.synth.speak(this.currentUtterance);
       console.log('Voice speaking:', text);
     } catch (err) {
@@ -89,60 +96,73 @@ class VoiceService {
    * Announce game start message
    */
   announceGameStart(options = {}) {
-    if (!this.isEnabled || !this.isSupported) return;
+    if (!this.isEnabled || !this.isSupported || !this.synth) return;
 
-    const text = 'Game has started. Get ready!';
-    this.stop();
+    try {
+      const text = 'Game has started. Get ready!';
+      this.stop();
 
-    this.currentUtterance = new SpeechSynthesisUtterance(text);
-    this.currentUtterance.lang = options.lang || 'en-US';
-    this.currentUtterance.rate = options.rate || 0.9;
-    this.currentUtterance.pitch = options.pitch || 1.0;
-    this.currentUtterance.volume = options.volume || 1.0;
+      this.currentUtterance = new SpeechSynthesisUtterance(text);
+      this.currentUtterance.lang = options.lang || 'en-US';
+      this.currentUtterance.rate = options.rate || 0.9;
+      this.currentUtterance.pitch = options.pitch || 1.0;
+      this.currentUtterance.volume = options.volume || 1.0;
 
-    this.synth.speak(this.currentUtterance);
+      this.synth.speak(this.currentUtterance);
+    } catch (err) {
+      console.error('Voice error:', err);
+    }
   }
 
   /**
    * Announce game over message
    */
   announceGameOver(options = {}) {
-    if (!this.isEnabled || !this.isSupported) return;
+    if (!this.isEnabled || !this.isSupported || !this.synth) return;
 
-    const text = 'Game is over. Thank you for playing!';
-    this.stop();
+    try {
+      const text = 'Game is over. Thank you for playing!';
+      this.stop();
 
-    this.currentUtterance = new SpeechSynthesisUtterance(text);
-    this.currentUtterance.lang = options.lang || 'en-US';
-    this.currentUtterance.rate = options.rate || 0.9;
-    this.currentUtterance.pitch = options.pitch || 1.0;
-    this.currentUtterance.volume = options.volume || 1.0;
+      this.currentUtterance = new SpeechSynthesisUtterance(text);
+      this.currentUtterance.lang = options.lang || 'en-US';
+      this.currentUtterance.rate = options.rate || 0.9;
+      this.currentUtterance.pitch = options.pitch || 1.0;
+      this.currentUtterance.volume = options.volume || 1.0;
 
-    this.synth.speak(this.currentUtterance);
+      this.synth.speak(this.currentUtterance);
+    } catch (err) {
+      console.error('Voice error:', err);
+    }
   }
 
   /**
    * Announce winner
    */
   announceWinner(playerName, pattern, options = {}) {
-    if (!this.isEnabled || !this.isSupported) return;
+    if (!this.isEnabled || !this.isSupported || !this.synth) return;
 
-    const text = `${playerName} has won with ${pattern}!`;
-    this.stop();
+    try {
+      const text = `${playerName} has won with ${pattern}!`;
+      this.stop();
 
-    this.currentUtterance = new SpeechSynthesisUtterance(text);
-    this.currentUtterance.lang = options.lang || 'en-US';
-    this.currentUtterance.rate = options.rate || 0.85;
-    this.currentUtterance.pitch = options.pitch || 1.2;
-    this.currentUtterance.volume = options.volume || 1.0;
+      this.currentUtterance = new SpeechSynthesisUtterance(text);
+      this.currentUtterance.lang = options.lang || 'en-US';
+      this.currentUtterance.rate = options.rate || 0.85;
+      this.currentUtterance.pitch = options.pitch || 1.2;
+      this.currentUtterance.volume = options.volume || 1.0;
 
-    this.synth.speak(this.currentUtterance);
+      this.synth.speak(this.currentUtterance);
+    } catch (err) {
+      console.error('Voice error:', err);
+    }
   }
 
   /**
    * Stop current announcement
    */
   stop() {
+    if (!this.synth) return;
     this.synth.cancel();
     this.currentUtterance = null;
   }
@@ -176,6 +196,7 @@ class VoiceService {
    * Get available voices
    */
   getAvailableVoices() {
+    if (!this.synth) return [];
     return this.synth.getVoices();
   }
 

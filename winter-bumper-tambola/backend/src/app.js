@@ -25,7 +25,14 @@ app.use(helmet({
 // CORS - MUST come before all routes
 const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
   .split(',')
-  .map(url => url.trim());
+  .map(url => url.trim())
+  // Also allow Vercel preview deployments (they match *.vercel.app pattern)
+  .concat(process.env.NODE_ENV === 'production' ? [] : ['http://localhost:5173']);
+
+// In production, also allow any vercel.app subdomain for preview deployments
+if (process.env.NODE_ENV === 'production') {
+  // This will be handled in the CORS callback below
+}
 
 console.log('🔧 Allowed CORS Origins:', allowedOrigins);
 
@@ -37,6 +44,11 @@ app.use(
       
       // Check if origin is in allowlist
       if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      // Allow Vercel preview deployments (*.vercel.app)
+      if (origin.includes('vercel.app')) {
         return callback(null, true);
       }
       
@@ -61,7 +73,12 @@ app.use(compression());
 // Additional manual CORS headers as fallback
 app.use((req, res, next) => {
   const origin = req.get('origin');
-  if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
+  const isAllowed = !origin || 
+                    allowedOrigins.includes(origin) || 
+                    origin.includes('vercel.app') ||
+                    process.env.NODE_ENV === 'development';
+  
+  if (isAllowed) {
     res.header('Access-Control-Allow-Origin', origin || '*');
     res.header('Access-Control-Allow-Credentials', 'true');
     res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');

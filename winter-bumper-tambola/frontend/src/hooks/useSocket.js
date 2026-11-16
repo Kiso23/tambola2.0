@@ -6,6 +6,7 @@ import toast from 'react-hot-toast';
 
 export function useSocket({ roomCode, playerToken, hostToken, enabled = true, voiceEnabled = false }) {
   const socketRef = useRef(null);
+  const voiceEnabledRef = useRef(voiceEnabled);
   const {
     setRoomState,
     onNumberCalled,
@@ -15,9 +16,11 @@ export function useSocket({ roomCode, playerToken, hostToken, enabled = true, vo
     onPlayersUpdate,
   } = useGameStore();
 
-  // Update voice service when voiceEnabled changes
+  // Update voice service and ref when voiceEnabled changes
   useEffect(() => {
+    voiceEnabledRef.current = voiceEnabled;
     voiceService.setEnabled(voiceEnabled);
+    console.log('Voice enabled changed to:', voiceEnabled);
   }, [voiceEnabled]);
 
   useEffect(() => {
@@ -42,7 +45,9 @@ export function useSocket({ roomCode, playerToken, hostToken, enabled = true, vo
     socket.on('number:called', (data) => {
       onNumberCalled(data);
       // Announce number if voice is enabled
-      if (voiceEnabled && data.number) {
+      console.log('Number called event:', data.number, 'Voice enabled:', voiceEnabledRef.current);
+      if (voiceEnabledRef.current && data.number) {
+        console.log('Triggering voice for number:', data.number);
         voiceService.announceNumber(data.number, {
           rate: 0.9,
           pitch: 1.0,
@@ -55,7 +60,7 @@ export function useSocket({ roomCode, playerToken, hostToken, enabled = true, vo
       onGameStarted(data);
       toast.success('🎮 Game started!', { icon: '🎉' });
       // Announce game start
-      if (voiceEnabled) {
+      if (voiceEnabledRef.current) {
         voiceService.announceGameStart({ rate: 0.9 });
       }
     });
@@ -63,7 +68,7 @@ export function useSocket({ roomCode, playerToken, hostToken, enabled = true, vo
     socket.on('game:over', (data) => {
       onGameOver(data);
       // Announce game over
-      if (voiceEnabled) {
+      if (voiceEnabledRef.current) {
         voiceService.announceGameOver({ rate: 0.9 });
       }
     });
@@ -82,7 +87,7 @@ export function useSocket({ roomCode, playerToken, hostToken, enabled = true, vo
         { duration: 5000 }
       );
       // Announce winner
-      if (voiceEnabled) {
+      if (voiceEnabledRef.current) {
         voiceService.announceWinner(data.playerName, patternLabels[data.pattern] || data.pattern);
       }
     });

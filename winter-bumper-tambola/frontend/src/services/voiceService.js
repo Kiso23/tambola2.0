@@ -8,6 +8,19 @@ class VoiceService {
     this.isSupported = !!this.synth;
     this.currentUtterance = null;
     this.isEnabled = false;
+    this.voices = [];
+    
+    // Load voices when they become available
+    if (this.isSupported) {
+      this.loadVoices();
+      // Some browsers load voices asynchronously
+      this.synth.onvoiceschanged = () => this.loadVoices();
+    }
+  }
+
+  loadVoices() {
+    this.voices = this.synth.getVoices();
+    console.log('Available voices:', this.voices.length);
   }
 
   /**
@@ -31,7 +44,10 @@ class VoiceService {
    * Announce a number
    */
   announceNumber(number, options = {}) {
-    if (!this.isEnabled || !this.isSupported) return;
+    if (!this.isEnabled || !this.isSupported) {
+      console.warn('Voice not enabled or not supported');
+      return;
+    }
 
     const {
       lang = 'en-US',
@@ -42,6 +58,7 @@ class VoiceService {
 
     // Convert number to words
     const text = this.numberToWords(number);
+    console.log('Announcing:', text);
 
     // Stop any ongoing speech
     this.stop();
@@ -53,8 +70,19 @@ class VoiceService {
     this.currentUtterance.pitch = pitch;
     this.currentUtterance.volume = volume;
 
+    // Use a voice if available
+    if (this.voices.length > 0) {
+      const englishVoice = this.voices.find(v => v.lang.startsWith('en')) || this.voices[0];
+      this.currentUtterance.voice = englishVoice;
+    }
+
     // Speak
-    this.synth.speak(this.currentUtterance);
+    try {
+      this.synth.speak(this.currentUtterance);
+      console.log('Voice speaking:', text);
+    } catch (err) {
+      console.error('Voice error:', err);
+    }
   }
 
   /**

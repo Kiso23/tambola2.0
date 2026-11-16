@@ -14,10 +14,15 @@ const logger = require('./utils/logger');
 
 const app = express();
 
-// Security headers
-app.use(helmet());
+// Trust proxy (important for Render)
+app.set('trust proxy', 1);
 
-// CORS
+// Security headers
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: "cross-origin" }
+}));
+
+// CORS - MUST come before all routes
 const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
   .split(',')
   .map(url => url.trim());
@@ -26,19 +31,47 @@ console.log('🔧 Allowed CORS Origins:', allowedOrigins);
 
 app.use(
   cors({
-    origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+    origin: function(origin, callback) {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      if (!origin) return callback(null, true);
+      
+      // Check if origin is in allowlist
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+      
+      // In development, allow all origins
+      if (process.env.NODE_ENV === 'development') {
+        return callback(null, true);
+      }
+      
       console.warn(`⚠️ CORS blocked origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
-    methods: ['GET', 'POST', 'OPTIONS'],
+    methods: ['GET', 'POST', 'OPTIONS', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],
+    optionsSuccessStatus: 200, // For legacy browsers
   })
 );
 
 // Compression
 app.use(compression());
+
+// Additional manual CORS headers as fallback
+app.use((req, res, next) => {
+  const origin = req.get('origin');
+  if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV === 'development') {
+    res.header('Access-Control-Allow-Origin', origin || '*');
+    res.header('Access-Control-Allow-Credentials', 'true');
+    res.header('Access-Control-Allow-Methods', 'GET, POST, OPTIONS, PUT, DELETE');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  }
+  if (req.method === 'OPTIONS') {
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 // Body parsing
 app.use(express.json({ limit: '10kb' }));

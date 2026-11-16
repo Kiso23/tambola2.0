@@ -61,7 +61,7 @@ async function bookTicket({ ticketSerialNumber, playerName, email, phone }) {
 
   await ticket.save();
 
-  logger.info(`Ticket ${serialNumber} booked by ${playerName} with login ID: ${loginId}`);
+  logger.info(`Ticket ${ticket.serialNumber} booked by ${playerName} with login ID: ${loginId}`);
 
   return {
     serialNumber: ticket.serialNumber,

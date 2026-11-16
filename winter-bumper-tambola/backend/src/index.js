@@ -7,18 +7,21 @@ const setupSocket = require('./socket/socketHandler');
 const logger = require('./utils/logger');
 
 const PORT = process.env.PORT || 5000;
+const CLIENT_URL = (process.env.CLIENT_URL || 'http://localhost:5173').split(',')[0].trim();
 
 const server = http.createServer(app);
 
 const io = new Server(server, {
   cors: {
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: CLIENT_URL,
     methods: ['GET', 'POST'],
     credentials: true,
   },
   pingTimeout: 60000,
   pingInterval: 25000,
 });
+
+console.log('🔌 Socket.IO CORS Origin:', CLIENT_URL);
 
 app.set('io', io);
 setupSocket(io);

@@ -18,14 +18,22 @@ const app = express();
 app.use(helmet());
 
 // CORS
-const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173').split(',');
+const allowedOrigins = (process.env.CLIENT_URL || 'http://localhost:5173')
+  .split(',')
+  .map(url => url.trim());
+
+console.log('🔧 Allowed CORS Origins:', allowedOrigins);
+
 app.use(
   cors({
     origin: (origin, callback) => {
       if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+      console.warn(`⚠️ CORS blocked origin: ${origin}`);
       callback(new Error('Not allowed by CORS'));
     },
     credentials: true,
+    methods: ['GET', 'POST', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
   })
 );
 

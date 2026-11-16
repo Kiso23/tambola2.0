@@ -48,14 +48,20 @@ export default function GamePage() {
 
   // Auto-call numbers (host only)
   useEffect(() => {
-    if (autoCall && isHost && store.status === 'playing') {
-      autoCallRef.current = setInterval(() => {
-        handleCallNumber();
-      }, 5000);
-    } else {
-      clearInterval(autoCallRef.current);
+    if (isHost && store.status === 'playing') {
+      const socket = getSocket();
+      if (autoCall && socket?.connected) {
+        socket.emit('host:enableAutoCall');
+      } else if (!autoCall && socket?.connected) {
+        socket.emit('host:disableAutoCall');
+      }
     }
-    return () => clearInterval(autoCallRef.current);
+    return () => {
+      if (!autoCall && isHost) {
+        const socket = getSocket();
+        socket?.emit('host:disableAutoCall');
+      }
+    };
   }, [autoCall, isHost, store.status]);
 
   const handleCallNumber = useCallback(async () => {

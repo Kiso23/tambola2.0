@@ -129,6 +129,7 @@ app.get('/', (req, res) => {
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/rooms', roomRoutes);
+app.use('/api/tickets', require('./routes/ticketRoutes'));
 
 // Error handling
 app.use(notFound);

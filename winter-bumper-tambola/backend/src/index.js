@@ -4,6 +4,7 @@ const { Server } = require('socket.io');
 const app = require('./app');
 const connectDB = require('./config/database');
 const setupSocket = require('./socket/socketHandler');
+const { initializeTickets } = require('./services/ticketBookingService');
 const logger = require('./utils/logger');
 
 const PORT = process.env.PORT || 5000;
@@ -28,6 +29,14 @@ setupSocket(io);
 
 const start = async () => {
   await connectDB();
+  
+  // Initialize tickets on startup
+  try {
+    await initializeTickets();
+  } catch (err) {
+    logger.error(`Failed to initialize tickets: ${err.message}`);
+  }
+  
   server.listen(PORT, () => {
     logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
   });

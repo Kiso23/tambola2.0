@@ -24,6 +24,13 @@ const schemas = {
       .valid('earlyFive', 'topLine', 'middleLine', 'bottomLine', 'fullHouse')
       .required(),
   }),
+
+  bookTicket: Joi.object({
+    serialNumber: Joi.string().trim().required().pattern(/^TB-\d{4}$/),
+    playerName: Joi.string().trim().min(2).max(30).required(),
+    email: Joi.string().email().required(),
+    phone: Joi.string().trim().min(10).max(15).required(),
+  }),
 };
 
 function validate(schemaName) {

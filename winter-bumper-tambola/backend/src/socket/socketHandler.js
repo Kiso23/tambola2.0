@@ -1,6 +1,9 @@
 const gameService = require('../services/gameService');
 const logger = require('../utils/logger');
 
+// Store auto-call intervals
+const autoCallIntervals = new Map();
+
 module.exports = function setupSocket(io) {
   // Auth middleware for socket connections
   io.use((socket, next) => {
@@ -101,7 +104,79 @@ module.exports = function setupSocket(io) {
         }
       });
 
-      // Player claiming a win via socket
+      // Handle host enabling auto-call (4 seconds between calls)
+      socket.on('host:enableAutoCall', async () => {
+        try {
+          const r = await gameService.getRoom(roomCode);
+          if (!r || r.hostToken !== hostToken) {
+            socket.emit('error', { message: 'Unauthorized' });
+            return;
+          }
+
+          if (autoCallIntervals.has(roomCode)) {
+            socket.emit('error', { message: 'Auto-call already enabled' });
+            return;
+          }
+
+          const interval = setInterval(async () => {
+            try {
+              const room = await gameService.getRoom(roomCode);
+              if (!room || room.status !== 'playing') {
+                clearInterval(interval);
+                autoCallIntervals.delete(roomCode);
+                return;
+              }
+
+              const { room: updated, number, gameOver } = await gameService.callNextNumber(roomCode);
+
+              if (gameOver) {
+                io.to(roomCode).emit('game:over', { winners: updated.winners });
+                clearInterval(interval);
+                autoCallIntervals.delete(roomCode);
+              } else {
+                io.to(roomCode).emit('number:called', {
+                  number,
+                  calledNumbers: updated.calledNumbers,
+                  lastCalledNumber: updated.lastCalledNumber,
+                  remainingCount: updated.remainingNumbers.length,
+                  autoCall: true,
+                });
+              }
+            } catch (err) {
+              logger.error(`Auto-call error for room ${roomCode}: ${err.message}`);
+              clearInterval(interval);
+              autoCallIntervals.delete(roomCode);
+            }
+          }, 4000); // 4 seconds between calls
+
+          autoCallIntervals.set(roomCode, interval);
+          socket.emit('autoCall:enabled');
+          socket.to(roomCode).emit('autoCall:enabled');
+        } catch (err) {
+          socket.emit('error', { message: err.message });
+        }
+      });
+
+      // Handle host disabling auto-call
+      socket.on('host:disableAutoCall', async () => {
+        try {
+          const r = await gameService.getRoom(roomCode);
+          if (!r || r.hostToken !== hostToken) {
+            socket.emit('error', { message: 'Unauthorized' });
+            return;
+          }
+
+          if (autoCallIntervals.has(roomCode)) {
+            clearInterval(autoCallIntervals.get(roomCode));
+            autoCallIntervals.delete(roomCode);
+          }
+
+          socket.emit('autoCall:disabled');
+          socket.to(roomCode).emit('autoCall:disabled');
+        } catch (err) {
+          socket.emit('error', { message: err.message });
+        }
+      });
       socket.on('player:claim', async ({ pattern }) => {
         try {
           if (!playerToken) {

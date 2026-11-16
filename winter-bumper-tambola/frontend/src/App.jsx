@@ -7,6 +7,8 @@ import JoinGamePage from './pages/JoinGamePage';
 import LobbyPage from './pages/LobbyPage';
 import GamePage from './pages/GamePage';
 import HowToPlayPage from './pages/HowToPlayPage';
+import TicketShop from './pages/TicketShop';
+import MyTicket from './pages/MyTicket';
 import SnowBackground from './components/ui/SnowBackground';
 
 export default function App() {
@@ -38,6 +40,8 @@ export default function App() {
           <Route path="/lobby/:roomCode" element={<LobbyPage />} />
           <Route path="/game/:roomCode" element={<GamePage />} />
           <Route path="/how-to-play" element={<HowToPlayPage />} />
+          <Route path="/tickets" element={<TicketShop />} />
+          <Route path="/my-ticket" element={<MyTicket />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

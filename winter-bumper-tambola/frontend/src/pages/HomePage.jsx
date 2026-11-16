@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Plus, Users, Info } from 'lucide-react';
+import { Plus, Users, Info, Ticket, Eye } from 'lucide-react';
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -55,6 +55,22 @@ export default function HomePage() {
             <Users size={22} />
             Join Game
           </button>
+          <div className="flex gap-2">
+            <button
+              className="flex-1 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-1"
+              onClick={() => navigate('/tickets')}
+            >
+              <Ticket size={18} />
+              Buy Ticket
+            </button>
+            <button
+              className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-3 rounded-lg transition-colors flex items-center justify-center gap-1"
+              onClick={() => navigate('/my-ticket')}
+            >
+              <Eye size={18} />
+              My Ticket
+            </button>
+          </div>
           <button
             className="flex items-center justify-center gap-2 text-purple-700 font-semibold hover:text-purple-900 transition-colors mt-1"
             onClick={() => navigate('/how-to-play')}

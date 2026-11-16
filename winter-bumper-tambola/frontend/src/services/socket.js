@@ -7,7 +7,9 @@ export function connectSocket({ roomCode, playerToken, hostToken }) {
     socket.disconnect();
   }
 
-  socket = io('/', {
+  const SOCKET_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+
+  socket = io(SOCKET_URL, {
     auth: { roomCode, playerToken: playerToken || null, hostToken: hostToken || null },
     reconnectionAttempts: 5,
     reconnectionDelay: 1000,

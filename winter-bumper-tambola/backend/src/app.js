@@ -117,6 +117,15 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', uptime: process.uptime(), timestamp: Date.now() });
 });
 
+// Root endpoint for health checks (HEAD and GET)
+app.head('/', (req, res) => {
+  res.status(200).end();
+});
+
+app.get('/', (req, res) => {
+  res.json({ message: 'Tambola Backend API - Use /health for status' });
+});
+
 // Routes
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/rooms', roomRoutes);

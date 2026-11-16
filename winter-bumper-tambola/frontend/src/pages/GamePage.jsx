@@ -1,10 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { Settings, Users } from 'lucide-react';
+import { Settings, Users, Volume2, VolumeX } from 'lucide-react';
 import { useSocket } from '../hooks/useSocket';
 import useGameStore from '../store/gameStore';
 import { getSocket } from '../services/socket';
 import { roomAPI } from '../services/api';
+import voiceService from '../services/voiceService';
 import NumberBoard from '../components/game/NumberBoard';
 import PlayerTicket from '../components/game/PlayerTicket';
 import LastCalled from '../components/game/LastCalled';
@@ -20,6 +21,7 @@ export default function GamePage() {
   const [calling, setCalling] = useState(false);
   const [showWinner, setShowWinner] = useState(null);
   const [autoCall, setAutoCall] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useState(false);
   const autoCallRef = React.useRef(null);
 
   const isHost = store.role === 'host';
@@ -29,6 +31,7 @@ export default function GamePage() {
     playerToken: store.playerToken,
     hostToken: store.hostToken,
     enabled: true,
+    voiceEnabled,
   });
 
   // Guard: no session → home
@@ -122,13 +125,22 @@ export default function GamePage() {
               <span className="text-sm font-semibold">{store.playerCount || store.players?.length || 0} Players</span>
             </div>
             {isHost && (
-              <button
-                onClick={() => setAutoCall((v) => !v)}
-                className={`p-2 rounded-xl transition-colors ${autoCall ? 'bg-green-500 text-white' : 'bg-purple-600 text-purple-200 hover:bg-purple-500'}`}
-                title={autoCall ? 'Auto-call ON' : 'Auto-call OFF'}
-              >
-                <Settings size={18} />
-              </button>
+              <>
+                <button
+                  onClick={() => setVoiceEnabled((v) => !v)}
+                  className={`p-2 rounded-xl transition-colors ${voiceEnabled ? 'bg-green-500 text-white' : 'bg-purple-600 text-purple-200 hover:bg-purple-500'}`}
+                  title={voiceEnabled ? 'Voice ON' : 'Voice OFF'}
+                >
+                  {voiceEnabled ? <Volume2 size={18} /> : <VolumeX size={18} />}
+                </button>
+                <button
+                  onClick={() => setAutoCall((v) => !v)}
+                  className={`p-2 rounded-xl transition-colors ${autoCall ? 'bg-green-500 text-white' : 'bg-purple-600 text-purple-200 hover:bg-purple-500'}`}
+                  title={autoCall ? 'Auto-call ON' : 'Auto-call OFF'}
+                >
+                  <Settings size={18} />
+                </button>
+              </>
             )}
           </div>
         </div>
